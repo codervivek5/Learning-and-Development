@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.services.auth_service import AuthService
-from app.schemas.auth import Token, UserLogin
+from app.schemas.auth import Token
 from app.schemas.user import UserCreate, UserResponse
 from app.core.constants import UserRole
 
@@ -49,8 +49,6 @@ async def login_custom(
     Form-Data/URL-Encoded formats from Swagger UI seamlessly.
     """
     content_type = request.headers.get("content-type", "")
-    email = None
-    password = None
 
     try:
         if "application/json" in content_type:
@@ -87,7 +85,7 @@ async def login_custom(
         )
 
     access_token = AuthService.generate_tokens(user.id)
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(access_token=access_token, token_type="bearer",organization_id=user.organization_id)
 
 
 @router.post("/login/access-token", response_model=Token)
@@ -109,4 +107,4 @@ async def login_oauth(
         )
 
     access_token = AuthService.generate_tokens(user.id)
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(access_token=access_token, token_type="bearer",organization_id=user.organization_id)
