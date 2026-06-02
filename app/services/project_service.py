@@ -1,0 +1,81 @@
+from typing import List, Optional
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.project import Project
+from app.schemas.project import ProjectCreate, ProjectUpdate
+
+
+class ProjectService:
+    """Service coordinates CRUD operations for Project entity."""
+
+    @staticmethod
+    async def get_projects(
+        db: AsyncSession, organization_id: int, skip: int = 0, limit: int = 100
+    ) -> List[Project]:
+        # Enforce multi-tenancy filter
+        result = await db.execute(
+            select(Project)
+            .where(Project.organization_id == organization_id)
+            .offset(skip)
+            .limit(limit)
+        )
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_project(
+        db: AsyncSession, project_id: int, organization_id: int
+    ) -> Optional[Project]:
+        result = await db.execute(
+            select(Project).where(
+                Project.id == project_id, Project.organization_id == organization_id
+            )
+        )
+        return result.scalars().first()
+
+    @staticmethod
+    async def create_project(
+        db: AsyncSession, project_in: ProjectCreate, organization_id: int
+    ) -> Project:
+        db_project = Project(
+            title=project_in.title,
+            description=project_in.description,
+            settings=project_in.settings or {},
+            organization_id=organization_id,
+        )
+        db.add(db_project)
+        await db.commit()
+        await db.refresh(db_project)
+        return db_project
+
+    @staticmethod
+    async def update_project(
+        db: AsyncSession,
+        project_id: int,
+        project_in: ProjectUpdate,
+        organization_id: int,
+    ) -> Optional[Project]:
+        db_project = await ProjectService.get_project(db, project_id, organization_id)
+        if not db_project:
+            return None
+
+        update_data = project_in.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(db_project, key, value)
+
+        db.add(db_project)
+        await db.commit()
+        await db.refresh(db_project)
+        return db_project
+
+    @staticmethod
+    async def delete_project(
+        db: AsyncSession, project_id: int, organization_id: int
+    ) -> bool:
+        db_project = await ProjectService.get_project(db, project_id, organization_id)
+        if not db_project:
+            return False
+
+        await db.delete(db_project)
+        await db.commit()
+        return True
