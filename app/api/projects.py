@@ -27,14 +27,12 @@ async def list_projects(
 
 @router.post("/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 async def create_project(
-    title: str = Form(..., description="Project title"),
-    description: Optional[str] = Form(None, description="Project description"),
+    project_in: ProjectCreate,
     db: AsyncSession = Depends(get_db),
     organization_id: int = Depends(get_current_organization_id),
     current_user: User = Depends(get_current_user),
 ):
     """Create a new e-learning design project."""
-    project_in = ProjectCreate(title=title, description=description)
     return await ProjectService.create_project(
         db=db, project_in=project_in, organization_id=organization_id
     )
@@ -62,14 +60,12 @@ async def get_project(
 @router.put("/{project_id}", response_model=ProjectResponse)
 async def update_project(
     project_id: int,
-    title: Optional[str] = Form(None, description="Updated project title"),
-    description: Optional[str] = Form(None, description="Updated project description"),
+    project_in: ProjectUpdate,
     db: AsyncSession = Depends(get_db),
     organization_id: int = Depends(get_current_organization_id),
     current_user: User = Depends(get_current_user),
 ):
     """Update settings or details of a project."""
-    project_in = ProjectUpdate(title=title, description=description)
     project = await ProjectService.update_project(
         db=db,
         project_id=project_id,

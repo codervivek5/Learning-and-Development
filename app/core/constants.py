@@ -6,12 +6,10 @@ TENANT_HEADER = "X-Organization-ID"
 
 # User roles in the L&D Platform (RBAC)
 class UserRole(str, Enum):
-    SUPER_ADMIN = "super_admin"
-    ORG_ADMIN = "org_admin"
-    INSTRUCTIONAL_DESIGNER = "instructional_designer"
-    REVIEWER = "reviewer"
-    SME = "sme"
-    LEARNER = "learner"
+    SUPER_ADMIN = "SUPER_ADMIN"
+    ADMIN = "ADMIN"
+    ORG_ADMIN = "ORG_ADMIN"
+    LEARNER = "LEARNER"
 
 
 # Workflow execution phases

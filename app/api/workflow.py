@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("/", response_model=WorkflowResponse, status_code=status.HTTP_201_CREATED)
 async def create_workflow_run(
-    project_id: int = Form(..., description="ID of the project to create workflow for"),
+    workflow_in: WorkflowCreate,
     db: AsyncSession = Depends(get_db),
     organization_id: int = Depends(get_current_organization_id),
     current_user: User = Depends(get_current_user),
@@ -20,7 +20,7 @@ async def create_workflow_run(
     """Register a new ADDIE workflow execution run for a project."""
     return await WorkflowService.create_workflow_run(
         db=db,
-        project_id=project_id,
+        project_id=workflow_in.project_id,
         organization_id=organization_id,
     )
 

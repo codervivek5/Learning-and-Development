@@ -5,7 +5,7 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-def get_chroma_client() -> chromadb.API:
+def get_chroma_client() -> chromadb.ClientAPI:
     """Initialize and return a ChromaDB client.
 
     Supports HTTP client (for Docker Compose/production) or local persistent
