@@ -8,23 +8,65 @@ import PhaseDevelop from './components/PhaseDevelop';
 import PhaseReview from './components/PhaseReview';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Central state pipeline tracking data flowing from Analysis down to Review
+  const [pipelineState, setPipelineState] = useState({
+    analysisData: null,
+    designBlueprint: null,
+    developmentAssets: null,
+  });
 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return <PhaseOverview />;
       case 'analysis':
-        return <PhaseAnalysis />;
+        return (
+          <PhaseAnalysis
+            onAdvancePipeline={(metrics) => {
+              setPipelineState(prev => ({ ...prev, analysisData: metrics }));
+              setActiveTab('design'); // Triggers smooth navigation to Phase 2
+            }}
+          />
+        );
       case 'design':
-        return <PhaseDesign />;
+        return (
+          <PhaseDesign
+            injectedAnalysis={pipelineState.analysisData}
+            onSaveBlueprint={(blueprint) => {
+              setPipelineState(prev => ({ ...prev, designBlueprint: blueprint }));
+              setActiveTab('develop'); // Triggers smooth navigation to Phase 3
+            }}
+          />
+        );
       case 'develop':
-        return <PhaseDevelop />;
+        return (
+          <PhaseDevelop
+            injectedBlueprint={pipelineState.designBlueprint}
+            onCompleteAssets={(assets) => {
+              setPipelineState(prev => ({ ...prev, developmentAssets: assets }));
+              setActiveTab('review'); // Triggers smooth navigation to Phase 4
+            }}
+          />
+        );
       case 'review':
-        return <PhaseReview />;
+        return (
+          <PhaseReview
+            completePipelineContext={pipelineState}
+            onSystemSignoff={() => {
+              // Handle post-signoff cleanup or dashboard redirection
+              setActiveTab('dashboard');
+            }}
+          />
+        );
       default:
-        return <div>View Scope Not Found</div>;
+        return (
+          <div className="p-6 bg-slate-950 border border-slate-800 rounded-xl text-slate-400 font-mono text-xs">
+            View Scope Not Found
+          </div>
+        );
     }
   };
 
