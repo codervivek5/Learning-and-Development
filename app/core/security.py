@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional, Union
 import jwt
 from passlib.context import CryptContext
 from app.core.config import settings
+import bcrypt
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -10,11 +11,31 @@ ALGORITHM = "HS256"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    """
+    Verifies a plain text password against the stored database hash string.
+    """
+    try:
+        password_bytes = plain_password.encode('utf-8')
+        hashed_bytes = hashed_password.encode('utf-8')
+
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except Exception:
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    """
+    Safely generates a bcrypt hash using the native string/bytes compilation.
+    """
+    # 1. Convert string password to bytes
+    password_bytes = password.encode('utf-8')
+
+    # 2. Generate salt and hash it
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+
+    # 3. Return as a clean string to store in DB
+    return hashed.decode('utf-8')
 
 
 def create_access_token(

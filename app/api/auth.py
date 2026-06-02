@@ -1,7 +1,7 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
 
 from app.db.session import get_db
 from app.services.auth_service import AuthService
@@ -41,13 +41,15 @@ async def signup(
 
 @router.post("/login", response_model=Token)
 async def login_custom(
-    email: str = Form(..., description="Registered email address"),
-    password: str = Form(..., description="Account password"),
+    login_data: UserLogin,  # React UI fixes: Standard JSON validation body parsing
     db: AsyncSession = Depends(get_db),
 ):
-    """Login with credentials returning access token."""
+    """
+    Standard JSON endpoint for the React Frontend App.
+    Accepts raw raw application/json format natively.
+    """
     user = await AuthService.authenticate_user(
-        db=db, email=email, password=password
+        db=db, email=login_data.email, password=login_data.password
     )
     if not user:
         raise HTTPException(
@@ -64,7 +66,10 @@ async def login_oauth(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
-    """OAuth2 compatible token login, for swagger documentation compatibility."""
+    """
+    OAuth2 compatible form data token login.
+    Keeps native Swagger UI 'Authorize' locks fully operational.
+    """
     user = await AuthService.authenticate_user(
         db=db, email=form_data.username, password=form_data.password
     )

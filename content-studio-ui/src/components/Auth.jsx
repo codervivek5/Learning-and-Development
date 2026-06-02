@@ -16,34 +16,53 @@ export default function Auth({ onLoginSuccess }) {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+
     setIsLoading(true);
     setErrorMessage('');
 
-    // Form payload structure based on active configurations
-    const payload = {
-      username: email,
-      password: password,
-      role: userRole, // Dynamically alters target authorization route layer parameters
-      remember: rememberMe
-    };
-
     try {
-      // Mocking the backend operational hit pipeline latency
-      setTimeout(() => {
-        if (email && password) {
-          console.log("Authentication Payload Submitted Successfully:", payload);
-          setIsLoading(false);
+      // Use URLSearchParams to send application/x-www-form-urlencoded
+      // This is the standard for OAuth2 and more compatible with FastAPI's Form parsing
+      const params = new URLSearchParams();
+      params.append("username", email); // OAuth2 spec uses 'username'
+      params.append("password", password);
 
-          // Trigger the parent state update callback to unlock dashboard
-          onLoginSuccess();
-        } else {
-          setIsLoading(false);
-          setErrorMessage("Invalid parameter inputs verification mapping checks failed.");
+      const response = await fetch(
+        "http://localhost:8000/api/v1/auth/login/access-token",
+        {
+          method: "POST",
+          body: params,
         }
-      }, 1000);
-    } catch (err) {
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || "Invalid credentials"
+        );
+      }
+
+      // Save token
+      localStorage.setItem(
+        "access_token",
+        data.access_token
+      );
+
+      // Save login state
+      localStorage.setItem(
+        "isAuthenticated",
+        "true"
+      );
+
+      onLoginSuccess();
+
+    } catch (error) {
+      setErrorMessage(
+        error.message || "Login failed"
+      );
+    } finally {
       setIsLoading(false);
-      setErrorMessage("Network response timeout context configuration error.");
     }
   };
 

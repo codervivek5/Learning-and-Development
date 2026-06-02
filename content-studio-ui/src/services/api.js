@@ -1,4 +1,5 @@
-const BASE_URL = 'http://localhost:8000/api/projects'; // Adjust port if your FastAPI runs elsewhere
+// Updated to match the FastAPI prefix pattern (API_V1_STR)
+const BASE_URL = 'http://localhost:8000/api/v1/projects'; 
 
 export const projectApi = {
   async getAll() {

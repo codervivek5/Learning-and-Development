@@ -14,7 +14,7 @@ class AuthService:
 
     @staticmethod
     async def authenticate_user(
-        db: AsyncSession, email: str, password: str
+            db: AsyncSession, email: str, password: str
     ) -> Optional[User]:
         result = await db.execute(select(User).where(User.email == email))
         user = result.scalars().first()
@@ -26,7 +26,7 @@ class AuthService:
 
     @staticmethod
     async def signup_user(
-        db: AsyncSession, user_in: UserCreate
+            db: AsyncSession, user_in: UserCreate
     ) -> Tuple[User, Organization]:
         # Check if user already exists
         result = await db.execute(select(User).where(User.email == user_in.email))
@@ -46,7 +46,7 @@ class AuthService:
             # Create a new organization
             org_name = user_in.organization_name or f"{user_in.full_name}'s Org"
             org_slug = org_name.lower().replace(" ", "-").replace("/", "-")
-            
+
             # Check slug uniqueness
             slug_res = await db.execute(
                 select(Organization).where(Organization.slug == org_slug)
@@ -62,8 +62,11 @@ class AuthService:
             await db.commit()
             await db.refresh(organization)
 
+        # 🔴 CHANGE/FIX: Explicitly force cast password to string to prevent Pydantic SecretStr object reference from leaking into bcrypt
+        raw_password_string = str(user_in.password)
+        hashed_password = get_password_hash(raw_password_string)
+
         # Create new User
-        hashed_password = get_password_hash(user_in.password)
         db_user = User(
             email=user_in.email,
             hashed_password=hashed_password,

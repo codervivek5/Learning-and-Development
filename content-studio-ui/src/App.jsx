@@ -8,7 +8,17 @@ import PhaseDevelop from './components/PhaseDevelop';
 import PhaseReview from './components/PhaseReview';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] =
+    useState(
+      localStorage.getItem("isAuthenticated") === "true"
+    );
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("isAuthenticated");
+    setIsAuthenticated(false);
+  };
+  
   const [activeTab, setActiveTab] = useState('dashboard');
 
   // Central state pipeline tracking data flowing from Analysis down to Review

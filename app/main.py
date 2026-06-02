@@ -68,13 +68,22 @@ app = FastAPI(
 # CORS Middleware
 # -----------------------------
 if settings.BACKEND_CORS_ORIGINS:
+    allow_origins = [str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
+    # Starlette raises RuntimeError if allow_origins contains '*' and allow_credentials is True.
+    # In development or default state, we map '*' to common local development origins to allow credentials.
+    if "*" in allow_origins:
+        allow_origins = [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+        ]
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            str(origin)
-            for origin in settings.BACKEND_CORS_ORIGINS
-        ],
+        allow_origins=allow_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
