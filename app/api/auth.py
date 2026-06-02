@@ -5,7 +5,7 @@ from typing import Optional
 
 from app.db.session import get_db
 from app.services.auth_service import AuthService
-from app.schemas.auth import Token, UserLogin
+from app.schemas.auth import Token
 from app.schemas.user import UserCreate, UserResponse
 from app.core.constants import UserRole
 
@@ -41,6 +41,7 @@ async def signup(
 
 @router.post("/login", response_model=Token)
 async def login_custom(
+    # FastAPI ka Form() multipart/form-data aur urlencoded dono handle karta hai
     email: str = Form(..., description="Registered email address"),
     password: str = Form(..., description="Account password"),
     db: AsyncSession = Depends(get_db),

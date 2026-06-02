@@ -10,7 +10,7 @@ class UserRole(str, Enum):
     ORG_ADMIN = "org_admin"
     INSTRUCTIONAL_DESIGNER = "instructional_designer"
     REVIEWER = "reviewer"
-    SME = "sme"  # Subject Matter Expert
+    SME = "sme"
     LEARNER = "learner"
 
 
