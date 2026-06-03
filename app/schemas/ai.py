@@ -6,6 +6,8 @@ from pydantic import BaseModel
 class ContentSource(str, Enum):
     """Supported data sources for scoping downstream AI generation requests."""
     raw_input = "raw_input"
+    file = "file"
+    document = "document"
     needs_assessment = "needs_assessment"
     curriculum_outline = "curriculum_outline"
     custom_content_1 = "custom_content_1"
@@ -42,6 +44,7 @@ class LearnerLocation(str, Enum):
 
 class AICurriculumRequest(BaseModel):
     """Unified payload model handling contextual data properties for structural parsing."""
+    project_id: int
     title: str
     target_audience: str
     objectives: List[str]
@@ -69,6 +72,8 @@ class AICurriculumResponse(BaseModel):
 class AIObjectivesRequest(BaseModel):
     """Payload targeting automated formulation of fine-grained target objectives."""
     project_id: int
+    content_source: ContentSource
+    content: str
     target_audience_description: str
     prior_knowledge_level: Optional[PriorKnowledgeLevel] = None
     job_roles: Optional[List[JobRole]] = None
@@ -116,8 +121,8 @@ class StoryboardSlide(BaseModel):
 class AIStoryboardRequest(BaseModel):
     """Specifies active context targets and text contents for generating storyboards."""
     project_id: int
-    design_outline_source: ContentSource
-    design_outline: Optional[str] = None
+    topic_outline: str
+    learning_goals: List[str]
 
 
 class AIStoryboardResponse(BaseModel):

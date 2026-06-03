@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Path, Form
+from enum import Enum
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from app.api.deps import get_current_user
@@ -18,6 +19,10 @@ from app.schemas.ai import (
 
 router = APIRouter()
 
+class ContentSourceType(str, Enum):
+    RAW_INPUT = "raw_input"
+    FILE = "file"
+    DOCUMENT = "document"
 
 async def verify_tenant_header(
         x_organization_id: int = Header(..., alias="X-Organization-ID", description="Active Tenant Organization ID")
@@ -78,8 +83,9 @@ async def generate_needs_analysis_direct(
 )
 async def generate_objectives(
         project_id: int = Form(..., description="Project ID"),
-        content_source: str = Form(..., description="Content source type"),
+        content_source: ContentSourceType = Form(..., description="Content source type"),
         content: str = Form(..., description="Content body"),
+        target_audience_description: Optional[str] = Form(None, description="Target audience description"),
         db: AsyncSession = Depends(get_db),
         organization_id: int = Header(..., alias="X-Organization-ID"),
         current_user: User = Depends(get_current_user),
@@ -89,7 +95,12 @@ async def generate_objectives(
     Matches properties mapped directly from the interactive metadata configuration tables.
     """
     # Create request object from form data to maintain consistency with service layer
-    request_data = AIObjectivesRequest(project_id=project_id, content_source=content_source, content=content)
+    request_data = AIObjectivesRequest(
+        project_id=project_id,
+        content_source=content_source,
+        content=content,
+        target_audience_description=target_audience_description or ""
+    )
 
     project = await ProjectService.get_project(
         db=db, project_id=request_data.project_id, organization_id=organization_id
@@ -117,7 +128,7 @@ async def generate_objectives(
 )
 async def generate_interactivity_suggestions(
         project_id: int = Form(..., description="Project ID"),
-        content_source: str = Form(..., description="Content source type"),
+        content_source: ContentSourceType = Form(..., description="Content source type"),
         content: str = Form(..., description="Content body"),
         db: AsyncSession = Depends(get_db),
         organization_id: int = Header(..., alias="X-Organization-ID"),
