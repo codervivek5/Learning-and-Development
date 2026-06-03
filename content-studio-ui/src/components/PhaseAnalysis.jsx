@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import { CloudUpload, FileText, Check, Edit2, Trash2, LayoutGrid, ArrowLeft } from 'lucide-react';
+import { CloudUpload, FileText, Check, Edit2, Trash2, LayoutGrid, ArrowLeft, Sparkles, Type } from 'lucide-react';
 import { projectApi } from '../services/api';
 
 export default function PhaseAnalysis({ onAdvancePipeline }) {
   const [title, setTitle] = useState("New Cybersecurity Course");
   const [description, setDescription] = useState("Employees across all departments including IT, Finance, HR.");
-  const [objectives, setObjectives] = useState([
-    "Understand key cybersecurity threats such as phishing, malware, ransomware, and social engineering.",
-    "Identify best practices for maintaining strong passwords and protecting sensitive information.",
-    "Apply safe browsing techniques and recognize suspicious websites and links.",
-    "Understand data privacy principles and compliance requirements.",
-    "Respond appropriately to security incidents and report potential threats."
-  ]);
+  const [objectives, setObjectives] = useState([]);
   const [newObjective, setNewObjective] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // State for the raw input content you mentioned
+  const [contentSource, setContentSource] = useState('raw_input'); // 'file' or 'raw_input'
+  const [rawContent, setRawContent] = useState("Learn how to build a REST API using FastAPI.");
 
   const handleStartAnalysis = async () => {
     setIsSubmitting(true);
@@ -24,6 +23,25 @@ export default function PhaseAnalysis({ onAdvancePipeline }) {
       alert("Error starting analysis: " + err.message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // New function to call your AI service
+  const handleGenerateAIObjectives = async () => {
+    if (!rawContent.trim()) return alert("Please enter some content first.");
+    
+    setIsGenerating(true);
+    try {
+      // Note: In a real flow, we'd create the project first or use a temp ID
+      // For now, we'll pass a dummy ID or the ID of the project being created
+      const result = await projectApi.generateAIObjectives(999, contentSource, rawContent);
+      if (result.objectives) {
+        setObjectives(result.objectives);
+      }
+    } catch (err) {
+      console.error("AI Generation Error:", err);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -61,18 +79,50 @@ export default function PhaseAnalysis({ onAdvancePipeline }) {
       <div className="space-y-6">
         {/* Section 1: Content Upload */}
         <div>
-          <h2 className="text-white font-semibold mb-3 flex items-center gap-2">1. Content Upload <span className="text-slate-500 text-xs">ⓘ</span></h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-[#1C1E26] border border-slate-800 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center">
-              <CloudUpload className="w-10 h-10 text-rose-500 mb-3" />
-              <p className="text-white font-medium mb-1">Drag & Drop files here</p>
-              <p className="text-slate-500 text-sm mb-4">or</p>
-              <button className="border border-rose-500 text-rose-500 px-4 py-1.5 rounded text-sm hover:bg-rose-500/10 transition">Browse Files</button>
-              <div className="mt-6 flex items-center gap-2 text-xs text-slate-500">
-                <span>Supported formats:</span>
-                {['PDF','PPTX','DOCX','MP4','TXT','...'].map(f => <span key={f} className="bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">{f}</span>)}
-              </div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-white font-semibold flex items-center gap-2">1. Content Source <span className="text-slate-500 text-xs">ⓘ</span></h2>
+            <div className="flex bg-[#1C1E26] p-1 rounded-lg border border-slate-800">
+              <button 
+                onClick={() => setContentSource('file')}
+                className={`px-3 py-1 rounded text-xs flex items-center gap-2 ${contentSource === 'file' ? 'bg-slate-800 text-white' : 'text-slate-500'}`}
+              >
+                <CloudUpload className="w-3 h-3"/> Files
+              </button>
+              <button 
+                onClick={() => setContentSource('raw_input')}
+                className={`px-3 py-1 rounded text-xs flex items-center gap-2 ${contentSource === 'raw_input' ? 'bg-slate-800 text-white' : 'text-slate-500'}`}
+              >
+                <Type className="w-3 h-3"/> Raw Text
+              </button>
             </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {contentSource === 'file' ? (
+              <div className="bg-[#1C1E26] border border-slate-800 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center">
+                <CloudUpload className="w-10 h-10 text-rose-500 mb-3" />
+                <p className="text-white font-medium mb-1">Drag & Drop files here</p>
+                <button className="border border-rose-500 text-rose-500 px-4 py-1.5 rounded text-sm hover:bg-rose-500/10 transition mt-4">Browse Files</button>
+              </div>
+            ) : (
+              <div className="bg-[#1C1E26] border border-slate-800 rounded-xl p-4 flex flex-col">
+                <textarea 
+                  value={rawContent}
+                  onChange={(e) => setRawContent(e.target.value)}
+                  placeholder="Paste your source text or curriculum notes here..."
+                  className="w-full h-32 bg-[#13151A] border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-rose-500 resize-none"
+                />
+                <button 
+                  onClick={handleGenerateAIObjectives}
+                  disabled={isGenerating}
+                  className="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95"
+                >
+                  <Sparkles className={`w-3 h-3 ${isGenerating ? 'animate-spin' : ''}`} />
+                  {isGenerating ? "AI is Analyzing..." : "Generate Objectives from Text"}
+                </button>
+              </div>
+            )}
+
             <div className="bg-[#1C1E26] border border-slate-800 rounded-xl p-6">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-white font-medium">Uploaded Files (3)</span>

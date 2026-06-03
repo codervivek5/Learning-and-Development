@@ -14,6 +14,11 @@ class TenantMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+
+        # 🔴 CRITICAL CORS FIX: Allow all browser preflight OPTIONS requests cleanly
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Exempt routes
         path = request.url.path
         if (

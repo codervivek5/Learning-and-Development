@@ -210,28 +210,7 @@ export default function PhaseOverview() {
           )}
         </div>
 
-        {/* Sidebar Logs */}
-        <aside className="w-full lg:w-72 space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-6">
-            <h2 className="font-bold text-slate-900 text-sm mb-4 flex items-center">
-              <Zap className="w-4 h-4 mr-2 text-amber-500" /> Live Audit Logs
-            </h2>
-            <div className="space-y-4">
-              {activities.map((act) => (
-                <div key={act.id} className="text-[11px] p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-slate-800">{act.user}</span>
-                    <span className="text-slate-400">{act.time}</span>
-                  </div>
-                  <p className="text-slate-600 line-clamp-2 mb-1">{act.action}</p>
-                  <span className="text-[9px] text-indigo-600 font-bold uppercase bg-indigo-50 px-1.5 py-0.5 rounded"> {/* Changed log tag to Indigo */}
-                    ↳ {act.project}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
+        
       </div>
     </div>
   );

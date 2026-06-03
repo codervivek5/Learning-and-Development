@@ -1,7 +1,8 @@
 import React from 'react';
 import { LayoutDashboard, FileText, Compass, Code, Eye, LogOut } from 'lucide-react';
 
-export default function Layout({ children, currentTab, setTab }) {
+
+export default function Layout({ children, currentTab, setTab, onLogout }) {
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'analysis', label: 'Phase 1: Analysis', icon: FileText },
@@ -66,7 +67,10 @@ export default function Layout({ children, currentTab, setTab }) {
             </div>
           </div>
 
-          <button className="text-slate-500 hover:text-red-400 p-2 rounded-lg transition-colors">
+          <button 
+            onClick={onLogout}
+            className="text-slate-500 hover:text-red-400 p-2 rounded-lg transition-colors"
+          >
             <LogOut className="w-4 h-4" />
           </button>
         </div>
@@ -80,22 +84,6 @@ export default function Layout({ children, currentTab, setTab }) {
           <div className="absolute top-[-150px] left-[-150px] w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[180px]" />
           <div className="absolute bottom-[-150px] right-[-150px] w-[500px] h-[500px] bg-rose-600/10 rounded-full blur-[180px]" />
         </div>
-
-        {/* <header className="h-16 border-b border-red-900/20 flex items-center justify-between px-8 bg-black/30 backdrop-blur-xl sticky top-0 z-10">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-sm font-semibold text-slate-200 capitalize tracking-wide">
-              {currentTab === 'dashboard'
-                ? 'Overview Matrix'
-                : `Workspace / ADDIE Model / ${currentTab}`}
-            </h1>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 shadow-lg shadow-red-900/20">
-              ● Active Session
-            </span>
-          </div>
-        </header> */}
 
         <div className="p-8 max-w-7xl w-full mx-auto relative z-10">
           {children}
