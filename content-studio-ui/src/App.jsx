@@ -13,12 +13,15 @@ export default function App() {
       localStorage.getItem("isAuthenticated") === "true"
     );
 
+  // const [isAuthenticated, setIsAuthenticated] = useState(true);
+
   const handleLogout = () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("organization_id");
     localStorage.removeItem("isAuthenticated");
     setIsAuthenticated(false);
   };
-  
+
   const [activeTab, setActiveTab] = useState('dashboard');
 
   // Central state pipeline tracking data flowing from Analysis down to Review
@@ -81,11 +84,19 @@ export default function App() {
   };
 
   if (!isAuthenticated) {
-    return <Auth onLoginSuccess={() => setIsAuthenticated(true)} />;
+
+    return <Auth onLoginSuccess={(authData) => {
+      if (authData) {
+        localStorage.setItem("access_token", authData.access_token);
+        localStorage.setItem("organization_id", authData.organization_id);
+        localStorage.setItem("isAuthenticated", "true");
+      }
+      setIsAuthenticated(true);
+    }} />;
   }
 
   return (
-    <Layout currentTab={activeTab} setTab={setActiveTab}>
+    <Layout currentTab={activeTab} setTab={setActiveTab} onLogout={handleLogout}>
       {renderContent()}
     </Layout>
   );

@@ -61,7 +61,7 @@ async def list_project_documents(
         {
             "id": doc.id,
             "filename": doc.filename,
-            "file_size": doc.file_size,
+            "file_size": f"{round(doc.file_size / 1024, 2) if doc.file_size else 0} KB",
             "is_embedded": doc.is_embedded,
             "created_at": doc.created_at,
         }

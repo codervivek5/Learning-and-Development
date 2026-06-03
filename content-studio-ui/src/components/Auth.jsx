@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 export default function Auth({ onLoginSuccess }) {
-  // 1. Role Toggle State Mapping (Based on Screenshot 2026-06-01 at 8.03.32 PM.jpg options)
+
   const [userRole, setUserRole] = useState('user'); // 'user' or 'admin'
 
   // 2. Form Input States
@@ -14,17 +14,15 @@ export default function Auth({ onLoginSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleFormSubmit = async (e) => {
+ const handleFormSubmit = async (e) => {
     e.preventDefault();
 
     setIsLoading(true);
     setErrorMessage('');
 
     try {
-      // Use URLSearchParams to send application/x-www-form-urlencoded
-      // This is the standard for OAuth2 and more compatible with FastAPI's Form parsing
       const params = new URLSearchParams();
-      params.append("username", email); // OAuth2 spec uses 'username'
+      params.append("username", email);
       params.append("password", password);
 
       const response = await fetch(
@@ -47,6 +45,12 @@ export default function Auth({ onLoginSuccess }) {
       localStorage.setItem(
         "access_token",
         data.access_token
+      );
+
+
+      localStorage.setItem(
+        "organization_id",
+        data.organization_id
       );
 
       // Save login state

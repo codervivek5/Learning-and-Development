@@ -1,7 +1,6 @@
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Header, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Path, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from typing import List, Optional
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
@@ -21,7 +20,7 @@ router = APIRouter()
 
 
 async def verify_tenant_header(
-    x_organization_id: int = Header(..., alias="X-Organization-ID", description="Active Tenant Organization ID")
+        x_organization_id: int = Header(..., alias="X-Organization-ID", description="Active Tenant Organization ID")
 ):
     """Ensures X-Organization-ID is validated through HTTP Headers instead of Query Parameters."""
     return x_organization_id
@@ -33,15 +32,17 @@ async def verify_tenant_header(
     dependencies=[Depends(verify_tenant_header)]
 )
 async def generate_needs_analysis_direct(
-    request_data: AICurriculumRequest,
-    project_id: int = Path(..., description="Project / training ID"),
-    db: AsyncSession = Depends(get_db),
-    organization_id: int = Header(..., alias="X-Organization-ID"),
-    current_user: User = Depends(get_current_user),
+        project_id: int = Path(..., description="Project ID"),
+        title: str = Form(..., description="Title of the curriculum"),
+        target_audience: str = Form(..., description="Target audience description"),
+        objectives: List[str] = Form(..., description="List of learning objectives"),
+        additional_context: Optional[str] = Form(None, description="Extra context"),
+        db: AsyncSession = Depends(get_db),
+        organization_id: int = Header(..., alias="X-Organization-ID"),
+        current_user: User = Depends(get_current_user),
 ):
     """
-    Generate an immediate needs analysis report for a project workspace.
-    Ensures multi-tenant security limits before passing context fields to the AI agent execution layer.
+    Generate an immediate needs analysis report using Form Data.
     """
     project = await ProjectService.get_project(
         db=db, project_id=project_id, organization_id=organization_id
@@ -54,13 +55,15 @@ async def generate_needs_analysis_direct(
 
     ai_service = AIService()
     try:
-        return await ai_service.generate_needs_analysis(
+        # Create request object from form data to maintain consistency with service layer
+        request_data = AICurriculumRequest(
             project_id=project_id,
-            title=request_data.title,
-            target_audience=request_data.target_audience,
-            objectives=request_data.objectives,
-            additional_context=request_data.additional_context,
+            title=title,
+            target_audience=target_audience,
+            objectives=objectives,
+            additional_context=additional_context
         )
+        return await ai_service.generate_needs_analysis(request_data)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -74,15 +77,20 @@ async def generate_needs_analysis_direct(
     dependencies=[Depends(verify_tenant_header)]
 )
 async def generate_objectives(
-    request_data: AIObjectivesRequest,
-    db: AsyncSession = Depends(get_db),
-    organization_id: int = Header(..., alias="X-Organization-ID"),
-    current_user: User = Depends(get_current_user),
+        project_id: int = Form(..., description="Project ID"),
+        content_source: str = Form(..., description="Content source type"),
+        content: str = Form(..., description="Content body"),
+        db: AsyncSession = Depends(get_db),
+        organization_id: int = Header(..., alias="X-Organization-ID"),
+        current_user: User = Depends(get_current_user),
 ):
     """
-    Generate recommended learning objectives using structured JSON payload details.
+    Generate recommended learning objectives using structured Form Data payload.
     Matches properties mapped directly from the interactive metadata configuration tables.
     """
+    # Create request object from form data to maintain consistency with service layer
+    request_data = AIObjectivesRequest(project_id=project_id, content_source=content_source, content=content)
+
     project = await ProjectService.get_project(
         db=db, project_id=request_data.project_id, organization_id=organization_id
     )
@@ -108,14 +116,18 @@ async def generate_objectives(
     dependencies=[Depends(verify_tenant_header)]
 )
 async def generate_interactivity_suggestions(
-    request_data: AIInteractivityRequest,
-    db: AsyncSession = Depends(get_db),
-    organization_id: int = Header(..., alias="X-Organization-ID"),
-    current_user: User = Depends(get_current_user),
+        project_id: int = Form(..., description="Project ID"),
+        content_source: str = Form(..., description="Content source type"),
+        content: str = Form(..., description="Content body"),
+        db: AsyncSession = Depends(get_db),
+        organization_id: int = Header(..., alias="X-Organization-ID"),
+        current_user: User = Depends(get_current_user),
 ):
     """
-    Recommend interactive elements based on course content sources and custom textbook strings.
+    Recommend interactive elements based on course content sources and custom textbook strings using Form Data.
     """
+    request_data = AIInteractivityRequest(project_id=project_id, content_source=content_source, content=content)
+
     project = await ProjectService.get_project(
         db=db, project_id=request_data.project_id, organization_id=organization_id
     )
@@ -141,14 +153,19 @@ async def generate_interactivity_suggestions(
     dependencies=[Depends(verify_tenant_header)]
 )
 async def generate_storyboard_slides(
-    request_data: AIStoryboardRequest,
-    db: AsyncSession = Depends(get_db),
-    organization_id: int = Header(..., alias="X-Organization-ID"),
-    current_user: User = Depends(get_current_user),
+        project_id: int = Form(..., description="Project ID"),
+        topic_outline: str = Form(..., description="Topic outline"),
+        learning_goals: List[str] = Form(..., description="List of learning goals"),
+        db: AsyncSession = Depends(get_db),
+        organization_id: int = Header(..., alias="X-Organization-ID"),
+        current_user: User = Depends(get_current_user),
 ):
     """
-    Generate storyboard slides built systematically from active design results.
+    Generate storyboard slides built systematically from active design results using Form Data.
     """
+    request_data = AIStoryboardRequest(project_id=project_id, topic_outline=topic_outline,
+                                       learning_goals=learning_goals)
+
     project = await ProjectService.get_project(
         db=db, project_id=request_data.project_id, organization_id=organization_id
     )
