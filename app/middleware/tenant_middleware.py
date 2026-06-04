@@ -34,14 +34,15 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         tenant_id_str = request.headers.get(TENANT_HEADER)
 
+        if tenant_id_str:
+            request.state.organization_id = tenant_id_str
+            return await call_next(request)
+
         referer = request.headers.get("referer", "")
         if "/docs" in referer or "127.0.0.1" in referer:
             # Mock a default tenant ID for Swagger interface verification smoothly
             request.state.organization_id = 1  # Assuming 1 is your first org id in DB
             return await call_next(request)
 
-        logger.warning("Tenant identifier missing from request headers", path=path)
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"detail": f"Missing required multi-tenant header: {TENANT_HEADER}"},
-        )
+        request.state.organization_id = None
+        return await call_next(request)

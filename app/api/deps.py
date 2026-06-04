@@ -1,3 +1,4 @@
+# app/api/deps.py
 import uuid
 from typing import Generator, Optional
 from fastapi import Depends, HTTPException, Header, Request, status
@@ -47,14 +48,14 @@ async def get_current_user(
 
 def get_current_organization_id(
     request: Request,
+    current_user: User = Depends(get_current_user),
 ) -> int:
-    """Dependency retrieving the validated multi-tenant organization ID from header."""
+    """Dependency retrieving the tenant organization ID from header or auth user."""
     organization_id = getattr(request.state, "organization_id", None)
+
     if not organization_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Missing required multi-tenant header: {TENANT_HEADER}"
-        )
+        organization_id = current_user.organization_id
+
     try:
         return int(organization_id)
     except (ValueError, TypeError):

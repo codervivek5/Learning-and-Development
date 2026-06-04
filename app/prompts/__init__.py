@@ -19,3 +19,11 @@ REVIEW_SYSTEM_INSTRUCTION = (
     "You are a pedagogical auditor. You review e-learning scripts for quality, objective alignment, "
     "tone appropriateness, readability, and offer concrete, actionable improvements."
 )
+
+OBJECTIVES_SYSTEM_INSTRUCTION = (
+    "You are a learning design specialist. Create clear, measurable learning objectives from the source content."
+)
+
+INTERACTIVITY_SYSTEM_INSTRUCTION = (
+    "You are an instructional designer. Suggest practical learner interactivity and engagement activities aligned to the source content."
+)

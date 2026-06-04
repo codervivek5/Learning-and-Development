@@ -1,3 +1,4 @@
+# app/models/project.py
 import uuid
 from typing import Dict, Any, List, Optional
 from sqlmodel import Field, Relationship, SQLModel, Column, JSON

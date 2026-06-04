@@ -1,3 +1,5 @@
+# app/services/auth_service.py
+
 import uuid
 from typing import Optional, Tuple
 from sqlalchemy import select

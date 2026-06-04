@@ -1,3 +1,4 @@
+# app/api/auth.py
 from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm

@@ -8,8 +8,8 @@ TENANT_HEADER = "X-Organization-ID"
 class UserRole(str, Enum):
     SUPER_ADMIN = "SUPER_ADMIN"
     ADMIN = "ADMIN"
-    ORG_ADMIN = "ORG_ADMIN"
-    LEARNER = "LEARNER"
+    DEVELOPER = "DEVELOPER"
+    DESIGNER = "DESIGNER"
 
 
 # Workflow execution phases

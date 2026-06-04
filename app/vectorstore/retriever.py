@@ -1,4 +1,3 @@
-import uuid
 from typing import Any, Dict, List
 from app.vectorstore.chroma_client import get_chroma_client
 from app.vectorstore.embeddings import get_embeddings
@@ -8,23 +7,19 @@ logger = get_logger(__name__)
 
 
 async def retrieve_context(
-    project_id: uuid.UUID,
+    project_id: int,
     query: str,
     limit: int = 5,
 ) -> List[Dict[str, Any]]:
-    """Retrieve relevant chunks from ChromaDB for a specific project."""
     try:
         client = get_chroma_client()
-        collection_name = f"project_{str(project_id).replace('-', '_')}"
+        collection_name = f"project_{project_id}"
 
-        # Get the collection
         collection = client.get_collection(name=collection_name)
 
-        # Generate query embeddings
         query_vectors = await get_embeddings(query)
         query_vector = query_vectors[0]
 
-        # Query collection
         results = collection.query(
             query_embeddings=[query_vector],
             n_results=limit,

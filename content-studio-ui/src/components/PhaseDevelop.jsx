@@ -1,35 +1,31 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Settings, Plus, LayoutGrid, CheckCircle2, FileText, MousePointerClick, Zap, Eye, Image as ImageIcon, X } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, LayoutGrid, CheckCircle2, X, CloudDownload, Sparkles, Eye } from 'lucide-react';
+import PhaseStepper from './PhaseStepper';
 
 export default function PhaseDevelop() {
   const [showModal, setShowModal] = useState(false);
 
   return (
-    <div className="bg-[#13151A] text-slate-300 min-h-screen p-6 font-sans flex flex-col relative">
+    <div className="bg-[#13151A] text-slate-300 min-h-screen p-4 md:p-6 font-sans flex flex-col relative">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-8 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">eLearning - Develop</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">eLearning - Develop</h1>
           <p className="text-sm text-slate-400">Build, enhance, and finalize your learning content.</p>
         </div>
-        <div className="flex items-center gap-8">
-           <div className="flex items-center gap-1 text-emerald-500"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div><span className="text-xs">Analysis</span></div>
-           <div className="w-8 h-[1px] bg-emerald-500"></div>
-           <div className="flex items-center gap-1 text-emerald-500"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div><span className="text-xs">Design</span></div>
-           <div className="w-8 h-[1px] bg-slate-700"></div>
-           <div className="flex items-center gap-1 text-rose-500"><div className="w-2.5 h-2.5 rounded-full bg-rose-500"></div><span className="text-xs">Develop</span></div>
-          <button className="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-medium">
-            <ArrowLeft className="w-4 h-4" /> Back to Design
+        <div className="w-full md:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <PhaseStepper currentPhase="develop" hideOnMobile={false} />
+          <button className="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-medium transition-colors whitespace-nowrap w-full sm:w-auto justify-center">
+            <ArrowLeft className="w-4 h-4" /> Back
           </button>
         </div>
       </div>
 
-      <div className="flex gap-6 flex-1 overflow-hidden">
-        {/* Left Outline (Same as Design) */}
-        <div className="w-72 bg-[#1C1E26] border border-slate-800 rounded-xl p-4 flex flex-col hidden lg:flex">
-          {/* ... Omitting outline code for brevity, it's identical to PhaseDesign ... */}
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
+        {/* Left Outline */}
+        <div className="w-full lg:w-72 bg-[#1C1E26] border border-slate-800 rounded-xl p-4 flex flex-col max-h-96 lg:max-h-none">
           <span className="text-xs font-bold uppercase text-slate-400 mb-4">Course Outline</span>
-          <div className="p-2 bg-slate-800/50 border-l-2 border-rose-500 text-white text-sm">1.2 What is Cybersecurity?</div>
+          <div className="p-2 bg-slate-800/50 border-l-2 border-rose-500 text-white text-sm rounded">1.2 Content Section</div>
         </div>
 
         {/* Center: Storyboard Editor */}
@@ -89,21 +85,27 @@ export default function PhaseDevelop() {
       </div>
 
       {/* Footer */}
-      <div className="flex justify-end gap-4 mt-6">
-         <button className="border border-slate-600 text-white px-4 py-2 rounded flex items-center gap-2 text-sm hover:bg-slate-800"><LayoutGrid className="w-4 h-4"/> Save Progress</button>
-         <button className="border border-slate-600 text-white px-4 py-2 rounded flex items-center gap-2 text-sm hover:bg-slate-800"><Eye className="w-4 h-4"/> Preview Storyboard</button>
-         <button onClick={() => setShowModal(true)} className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2 rounded flex items-center gap-2 text-sm font-medium"><LayoutGrid className="w-4 h-4"/> Export Content</button>
+      <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 border-t border-slate-800 pt-4">
+         <button className="border border-slate-600 text-white px-4 py-2 rounded flex items-center justify-center gap-2 text-sm hover:bg-slate-800 transition">
+           <LayoutGrid className="w-4 h-4"/> Save Progress
+         </button>
+         <button className="border border-slate-600 text-white px-4 py-2 rounded flex items-center justify-center gap-2 text-sm hover:bg-slate-800 transition">
+           <Eye className="w-4 h-4"/> Preview
+         </button>
+         <button onClick={() => setShowModal(true)} className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2 rounded flex items-center justify-center gap-2 text-sm font-medium transition">
+           <CloudDownload className="w-4 h-4"/> Export
+         </button>
       </div>
 
-      {/* Export Modal (Develop 2) */}
+      {/* Export Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <div className="bg-[#1C1E26] border border-slate-700 rounded-xl w-full max-w-4xl p-6 overflow-y-auto max-h-[90vh]">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2"><Sparkles className="w-5 h-5 text-rose-500"/> Generate Storyboard</h2>
-                    <button onClick={() => setShowModal(false)}><X className="text-slate-400 hover:text-white"/></button>
+            <div className="bg-[#1C1E26] border border-slate-700 rounded-xl w-full max-w-2xl p-6 overflow-y-auto max-h-[90vh]">
+                <div className="flex justify-between items-center mb-6 gap-3">
+                    <h2 className="text-xl font-bold text-white flex items-center gap-2"><Sparkles className="w-5 h-5 text-rose-500"/> Export</h2>
+                    <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white flex-shrink-0"><X className="w-5 h-5"/></button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     {[
                         {title: "Download as PDF", icon: "📄", format: "PDF"},
                         {title: "Download as Word", icon: "📝", format: "Word"},
@@ -111,17 +113,17 @@ export default function PhaseDevelop() {
                     ].map((opt, i) => (
                         <div key={i} className="border border-slate-700 hover:border-rose-500 rounded-xl p-6 flex flex-col items-center text-center bg-[#13151A] cursor-pointer transition">
                             <div className="text-4xl mb-4">{opt.icon}</div>
-                            <h3 className="font-bold text-white mb-4">{opt.title}</h3>
-                            <ul className="text-xs text-slate-400 space-y-2 text-left w-full mb-6">
-                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500"/> High-quality format</li>
-                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500"/> Include text, images</li>
+                            <h3 className="font-bold text-white mb-3 text-sm">{opt.title}</h3>
+                            <ul className="text-xs text-slate-400 space-y-1 text-left w-full mb-4">
+                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0"/> High quality</li>
+                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0"/> Images</li>
                             </ul>
-                            <button className="w-full border border-rose-500 text-rose-500 py-2 rounded flex justify-center items-center gap-2 text-sm"><CloudUpload className="w-4 h-4"/> Download {opt.format}</button>
+                            <button className="w-full border border-rose-500 text-rose-500 hover:bg-rose-500/10 py-2 rounded flex justify-center items-center gap-2 text-sm transition"><CloudDownload className="w-4 h-4"/> {opt.format}</button>
                         </div>
                     ))}
                 </div>
-                <div className="flex justify-end border-t border-slate-700 pt-4">
-                    <button onClick={() => setShowModal(false)} className="border border-slate-600 px-6 py-2 rounded text-white text-sm hover:bg-slate-800">Cancel</button>
+                <div className="flex justify-end gap-3 border-t border-slate-700 pt-4">
+                    <button onClick={() => setShowModal(false)} className="border border-slate-600 px-6 py-2 rounded text-white text-sm hover:bg-slate-800 transition">Cancel</button>
                 </div>
             </div>
         </div>

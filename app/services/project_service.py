@@ -1,9 +1,14 @@
+# app/services/project_service.py
 from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging import get_logger
 from app.models.project import Project
 from app.schemas.project import ProjectCreate, ProjectUpdate
+
+
+logger = get_logger(__name__)
 
 
 class ProjectService:
@@ -31,7 +36,14 @@ class ProjectService:
                 Project.id == project_id, Project.organization_id == organization_id
             )
         )
-        return result.scalars().first()
+        project = result.scalars().first()
+        if not project:
+            logger.warning(
+                "Project lookup failed for organization",
+                project_id=project_id,
+                organization_id=organization_id,
+            )
+        return project
 
     @staticmethod
     async def create_project(
