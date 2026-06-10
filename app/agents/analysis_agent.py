@@ -1,6 +1,7 @@
-import uuid
-from typing import Dict, Any, List, Optional
+# app/agents/analysis_agent.py
+from typing import List, Optional
 from app.workflows.analysis_graph import analysis_graph
+from app.schemas.analysis import AnalysisOutput, AnalysisResponse
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -11,15 +12,14 @@ class AnalysisAgent:
 
     async def run(
         self,
-        project_id: uuid.UUID,
+        project_id: int,
         title: str,
         target_audience: str,
         objectives: List[str],
         additional_context: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> AnalysisResponse:
         logger.info("Running Analysis Agent", project_id=project_id)
 
-        # Initial state setup
         initial_state = {
             "project_id": project_id,
             "title": title,
@@ -31,13 +31,16 @@ class AnalysisAgent:
             "error": None,
         }
 
-        # Execute Graph
         final_state = await analysis_graph.ainvoke(initial_state)
 
-        if final_state.get("error"):
-            logger.error("Analysis Agent execution completed with error", project_id=project_id, error=final_state["error"])
-            return {"status": "error", "error": final_state["error"]}
+        if error := final_state.get("error"):
+            logger.error(
+                "Analysis Agent execution completed with error",
+                project_id=project_id,
+                error=error,
+            )
+            raise RuntimeError(error)
 
-        logger.info("Analysis Agent execution completed successfully", project_id=project_id)
-        return final_state.get("analysis_output", {})
+        analysis_output = final_state.get("analysis_output", {})
+        return AnalysisResponse(phase="analysis", output=AnalysisOutput.model_validate(analysis_output))
 

@@ -1,24 +1,23 @@
 import asyncio
-import uuid
 from app.tasks.celery_app import celery_app
 from app.core.database import AsyncSessionLocal
 from app.models.workflow import WorkflowRun
 from app.models.project import Project
 from app.core.constants import WorkflowPhase, WorkflowStatus
+from app.schemas.analysis import AnalysisRequest
 from app.services.ai_service import AIService
+from app.services.training_content_service import TrainingContentService
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-async def _async_run_workflow(workflow_id_str: str, organization_id_str: str) -> None:
-    workflow_id = uuid.UUID(workflow_id_str)
-    organization_id = uuid.UUID(organization_id_str)
+async def _async_run_workflow(workflow_id_str: str) -> None:
+    workflow_id = int(workflow_id_str)
 
     ai_service = AIService()
 
     async with AsyncSessionLocal() as db:
-        # Load workflow run and the associated project
         db_workflow = await db.get(WorkflowRun, workflow_id)
         if not db_workflow:
             logger.error("Workflow run not found", workflow_id=workflow_id)
@@ -33,74 +32,90 @@ async def _async_run_workflow(workflow_id_str: str, organization_id_str: str) ->
             await db.commit()
             return
 
-        project_title = db_project.title
-        target_audience = db_project.settings.get("target_audience", "General Learners")
-        objectives = db_project.settings.get("objectives", ["Learn the fundamentals"])
-        additional_context = db_project.settings.get("additional_context", "")
-
     try:
-        # 1. Needs Analysis Phase
+        analysis_request = AnalysisRequest(
+            title=db_project.title,
+            target_audience=db_project.settings.get("target_audience", "General Learners"),
+            objectives=db_project.settings.get("objectives", []),
+            additional_context=db_project.settings.get("additional_context", ""),
+        )
+
         logger.info("Executing Analysis phase", workflow_id=workflow_id)
-        analysis_data = await ai_service.generate_needs_analysis(
+        analysis_output = await ai_service.generate_needs_analysis(
             project_id=db_project.id,
-            title=project_title,
-            target_audience=target_audience,
-            objectives=objectives,
-            additional_context=additional_context,
+            request=analysis_request,
         )
 
         async with AsyncSessionLocal() as db:
             db_workflow = await db.get(WorkflowRun, workflow_id)
             db_workflow.current_phase = WorkflowPhase.DESIGN
-            db_workflow.state_data = {"analysis": analysis_data}
+            db_workflow.state_data = {"analysis": analysis_output.model_dump()}
             db_workflow.logs = (db_workflow.logs or "") + "\n[System] Completed Phase: ANALYSIS"
             db.add(db_workflow)
             await db.commit()
+            await TrainingContentService.save_phase_output(
+                db=db,
+                project_id=db_project.id,
+                phase="analysis",
+                content=analysis_output.model_dump(),
+            )
 
-        # 2. Design Phase
-        logger.info("Executing Design phase", workflow_id=workflow_id)
-        design_data = await ai_service.generate_curriculum_outline(
+        design_output = await ai_service.generate_design(
             project_id=db_project.id,
-            analysis_results=analysis_data,
+            analysis_results=analysis_output.output.model_dump(),
         )
 
         async with AsyncSessionLocal() as db:
             db_workflow = await db.get(WorkflowRun, workflow_id)
             db_workflow.current_phase = WorkflowPhase.DEVELOP
-            db_workflow.state_data = {"design": design_data}
+            db_workflow.state_data = {"design": design_output.model_dump()}
             db_workflow.logs = (db_workflow.logs or "") + "\n[System] Completed Phase: DESIGN"
             db.add(db_workflow)
             await db.commit()
+            await TrainingContentService.save_phase_output(
+                db=db,
+                project_id=db_project.id,
+                phase="design",
+                content=design_output.model_dump(),
+            )
 
-        # 3. Development Phase
-        logger.info("Executing Development phase", workflow_id=workflow_id)
-        develop_data = await ai_service.generate_storyboard(
+        develop_output = await ai_service.generate_development(
             project_id=db_project.id,
-            design_results=design_data,
+            design_results=design_output.model_dump(),
         )
 
         async with AsyncSessionLocal() as db:
             db_workflow = await db.get(WorkflowRun, workflow_id)
             db_workflow.current_phase = WorkflowPhase.REVIEW
-            db_workflow.state_data = {"development": develop_data}
+            db_workflow.state_data = {"develop": develop_output.model_dump()}
             db_workflow.logs = (db_workflow.logs or "") + "\n[System] Completed Phase: DEVELOP"
             db.add(db_workflow)
             await db.commit()
+            await TrainingContentService.save_phase_output(
+                db=db,
+                project_id=db_project.id,
+                phase="develop",
+                content=develop_output.model_dump(),
+            )
 
-        # 4. Review Phase
-        logger.info("Executing Review phase", workflow_id=workflow_id)
-        review_data = await ai_service.review_content(
+        review_output = await ai_service.generate_review(
             project_id=db_project.id,
-            developed_content=develop_data,
+            developed_content=develop_output.model_dump(),
         )
 
         async with AsyncSessionLocal() as db:
             db_workflow = await db.get(WorkflowRun, workflow_id)
             db_workflow.status = WorkflowStatus.COMPLETED
-            db_workflow.state_data = {"review": review_data}
+            db_workflow.state_data = {"review": review_output.model_dump()}
             db_workflow.logs = (db_workflow.logs or "") + "\n[System] Completed Phase: REVIEW\n[System] Workflow Run Succeeded!"
             db.add(db_workflow)
             await db.commit()
+            await TrainingContentService.save_phase_output(
+                db=db,
+                project_id=db_project.id,
+                phase="review",
+                content=review_output.model_dump(),
+            )
 
         logger.info("Workflow run completed successfully", workflow_id=workflow_id)
 
@@ -116,6 +131,6 @@ async def _async_run_workflow(workflow_id_str: str, organization_id_str: str) ->
 
 
 @celery_app.task(name="app.tasks.ai_generation_task.run_workflow_pipeline_task")
-def run_workflow_pipeline_task(workflow_id: str, organization_id: str) -> None:
+def run_workflow_pipeline_task(workflow_id: str) -> None:
     """Celery background task to trigger the complete agentic L&D design process."""
-    asyncio.run(_async_run_workflow(workflow_id, organization_id))
+    asyncio.run(_async_run_workflow(workflow_id))

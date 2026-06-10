@@ -1,9 +1,14 @@
+# app/services/project_service.py
 from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging import get_logger
 from app.models.project import Project
 from app.schemas.project import ProjectCreate, ProjectUpdate
+
+
+logger = get_logger(__name__)
 
 
 class ProjectService:
@@ -11,12 +16,13 @@ class ProjectService:
 
     @staticmethod
     async def get_projects(
-        db: AsyncSession, organization_id: int, skip: int = 0, limit: int = 100
+        db: AsyncSession,
+            skip: int = 0,
+            limit: int = 100
     ) -> List[Project]:
         # Enforce multi-tenancy filter
         result = await db.execute(
             select(Project)
-            .where(Project.organization_id == organization_id)
             .offset(skip)
             .limit(limit)
         )
@@ -24,24 +30,28 @@ class ProjectService:
 
     @staticmethod
     async def get_project(
-        db: AsyncSession, project_id: int, organization_id: int
+        db: AsyncSession, project_id: int,
     ) -> Optional[Project]:
         result = await db.execute(
             select(Project).where(
-                Project.id == project_id, Project.organization_id == organization_id
+                Project.id == project_id
             )
         )
-        return result.scalars().first()
+        project = result.scalars().first()
+        if not project:
+            logger.warning(
+                project_id=project_id,
+            )
+        return project
 
     @staticmethod
     async def create_project(
-        db: AsyncSession, project_in: ProjectCreate, organization_id: int
+        db: AsyncSession, project_in: ProjectCreate
     ) -> Project:
         db_project = Project(
             title=project_in.title,
             description=project_in.description,
             settings=project_in.settings or {},
-            organization_id=organization_id,
         )
         db.add(db_project)
         await db.commit()
@@ -53,9 +63,8 @@ class ProjectService:
         db: AsyncSession,
         project_id: int,
         project_in: ProjectUpdate,
-        organization_id: int,
     ) -> Optional[Project]:
-        db_project = await ProjectService.get_project(db, project_id, organization_id)
+        db_project = await ProjectService.get_project(db, project_id)
         if not db_project:
             return None
 
@@ -70,9 +79,9 @@ class ProjectService:
 
     @staticmethod
     async def delete_project(
-        db: AsyncSession, project_id: int, organization_id: int
+        db: AsyncSession, project_id: int
     ) -> bool:
-        db_project = await ProjectService.get_project(db, project_id, organization_id)
+        db_project = await ProjectService.get_project(db, project_id)
         if not db_project:
             return False
 

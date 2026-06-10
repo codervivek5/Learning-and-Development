@@ -1,4 +1,3 @@
-import React from 'react';
 import { LayoutDashboard, FileText, Compass, Code, Eye, LogOut } from 'lucide-react';
 
 

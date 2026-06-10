@@ -2,9 +2,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, status, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 import json
+
 from app.db.session import get_db
-from app.api.deps import get_current_user, get_current_organization_id
+from app.api.deps import get_current_user, RoleChecker  # Import RoleChecker here
 from app.models.user import User
+from app.core.constants import UserRole
 from app.services.project_service import ProjectService
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse
 
@@ -16,29 +18,28 @@ async def list_projects(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    organization_id: int = Depends(get_current_organization_id),
-    current_user: User = Depends(get_current_user),
+    # Enforces that both LEARNERS and ADMINS can view projects in this single-org setup
+    current_user: User = Depends(RoleChecker([UserRole.LEARNER, UserRole.ADMIN])),
 ):
-    """Retrieve all design projects belonging to the active organization tenant."""
+    """Retrieve all design projects belonging to the platform."""
     return await ProjectService.get_projects(
-        db=db, organization_id=organization_id, skip=skip, limit=limit
+        db=db, skip=skip, limit=limit
     )
 
 
 @router.post("/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 async def create_project(
-        title: str = Form(..., description="Project name"),
-        description: Optional[str] = Form(None, description="Project description"),
-        db: AsyncSession = Depends(get_db),
-        organization_id: int = Depends(get_current_organization_id),
-        current_user: User = Depends(get_current_user),
+    title: str = Form(..., description="Project name"),
+    description: Optional[str] = Form(None, description="Project description"),
+    db: AsyncSession = Depends(get_db),
+    # RBAC Guard: Only ADMIN can create new projects
+    current_user: User = Depends(RoleChecker([UserRole.ADMIN])),
 ):
     """Create a new e-learning design project via Form Data."""
-    # Instantiating the expected Pydantic model internally so service logic doesn't break
     project_in = ProjectCreate(title=title, description=description)
 
     return await ProjectService.create_project(
-        db=db, project_in=project_in, organization_id=organization_id
+        db=db, project_in=project_in
     )
 
 
@@ -46,12 +47,12 @@ async def create_project(
 async def get_project(
     project_id: int,
     db: AsyncSession = Depends(get_db),
-    organization_id: int = Depends(get_current_organization_id),
-    current_user: User = Depends(get_current_user),
+    # Enforces that both LEARNERS and ADMINS can view a specific project
+    current_user: User = Depends(RoleChecker([UserRole.LEARNER, UserRole.ADMIN])),
 ):
     """Retrieve details of a specific project."""
     project = await ProjectService.get_project(
-        db=db, project_id=project_id, organization_id=organization_id
+        db=db, project_id=project_id
     )
     if not project:
         raise HTTPException(
@@ -68,8 +69,8 @@ async def update_project(
     description: Optional[str] = Form(None, description="Updated project description"),
     settings: Optional[str] = Form(None, description="Updated project settings as a JSON string"),
     db: AsyncSession = Depends(get_db),
-    organization_id: int = Depends(get_current_organization_id),
-    current_user: User = Depends(get_current_user),
+    # RBAC Guard: Only ADMIN can update projects
+    current_user: User = Depends(RoleChecker([UserRole.ADMIN])),
 ):
     """Update settings or details of a project partially via PATCH Form Data."""
     parsed_settings = None
@@ -82,14 +83,12 @@ async def update_project(
                 detail="Invalid JSON format provided for settings field."
             )
 
-    # Creating ProjectUpdate schema instance with mapped parameters
     project_in = ProjectUpdate(title=title, description=description, settings=parsed_settings)
 
     project = await ProjectService.update_project(
         db=db,
         project_id=project_id,
         project_in=project_in,
-        organization_id=organization_id,
     )
     if not project:
         raise HTTPException(
@@ -103,12 +102,12 @@ async def update_project(
 async def delete_project(
     project_id: int,
     db: AsyncSession = Depends(get_db),
-    organization_id: int = Depends(get_current_organization_id),
-    current_user: User = Depends(get_current_user),
+    # RBAC Guard: Only ADMIN can delete projects
+    current_user: User = Depends(RoleChecker([UserRole.ADMIN])),
 ):
     """Delete a design project."""
     success = await ProjectService.delete_project(
-        db=db, project_id=project_id, organization_id=organization_id
+        db=db, project_id=project_id
     )
     if not success:
         raise HTTPException(

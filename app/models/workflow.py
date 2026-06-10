@@ -1,11 +1,11 @@
-import uuid
+# app/models/workflow.py
 from typing import Dict, Any, Optional
-from sqlmodel import Field, Relationship, SQLModel, Column, JSON
-from app.db.base import TimestampModel, TenantMixin
+from sqlmodel import Field, Relationship, Column, JSON
+from app.db.base import TimestampModel
 from app.core.constants import WorkflowPhase, WorkflowStatus
 
 
-class WorkflowRun(TimestampModel, TenantMixin, table=True):
+class WorkflowRun(TimestampModel, table=True):
     """Execution state of ADDIE agents workflows."""
 
     __tablename__ = "workflow_run"

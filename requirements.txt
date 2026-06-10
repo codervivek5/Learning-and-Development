@@ -68,3 +68,4 @@ mypy>=1.9.0
 sqlalchemy
 greenlet
 pydantic[email]
+reportlab>=4.0.0

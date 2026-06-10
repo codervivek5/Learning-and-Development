@@ -1,3 +1,4 @@
+# app/schemas/auth.py
 from typing import Optional
 from pydantic import BaseModel, EmailStr
 
@@ -10,8 +11,6 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    organization_id: int
-
 
 class TokenPayload(BaseModel):
     sub: Optional[str] = None

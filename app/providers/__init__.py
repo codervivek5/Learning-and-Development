@@ -1,21 +1,37 @@
+# app/providers/__init__.py
 from app.core.config import settings
 from app.providers.base import BaseLLMProvider
 from app.providers.gemini_provider import GeminiProvider
+from app.providers.ollama_provider import OllamaProvider
 from app.providers.openai_provider import OpenAIProvider
 from app.providers.claude_provider import ClaudeProvider
 
 
+PROVIDERS = {   
+    "gemini": GeminiProvider,
+    "openai": OpenAIProvider,
+    "claude": ClaudeProvider,
+    "ollama": OllamaProvider,
+}
+
+
+def _get_provider(provider_name: str) -> BaseLLMProvider:
+    provider_class = PROVIDERS.get(provider_name.lower())
+
+    if not provider_class:
+        raise ValueError(
+            f"Unsupported provider: {provider_name}. "
+            f"Supported providers: {', '.join(PROVIDERS.keys())}"
+        )
+
+    return provider_class()
+
+
 def get_provider() -> BaseLLMProvider:
     """Instantiate the active LLM provider based on settings."""
-    provider_name = settings.LLM_PROVIDER.lower()
-    if provider_name == "gemini":
-        return GeminiProvider()
-    elif provider_name == "openai":
-        return OpenAIProvider()
-    elif provider_name == "claude":
-        return ClaudeProvider()
-    else:
-        raise ValueError(
-            f"Unsupported LLM_PROVIDER: {provider_name}. "
-            f"Please set LLM_PROVIDER to 'gemini'."
-        )
+    return _get_provider(settings.LLM_PROVIDER)
+
+
+def get_embedding_provider() -> BaseLLMProvider:
+    """Instantiate the active embedding provider based on settings."""
+    return _get_provider(settings.EMBEDDING_PROVIDER)

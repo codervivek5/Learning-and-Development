@@ -1,11 +1,11 @@
-import uuid
+# app/model/user.py
 from typing import Optional
-from sqlmodel import Field, Relationship, SQLModel
-from app.db.base import TimestampModel, TenantMixin
+from sqlmodel import Field
+from app.db.base import TimestampModel
 from app.core.constants import UserRole
 
 
-class User(TimestampModel, TenantMixin, table=True):
+class User(TimestampModel, table=True):
     """User accounts model."""
 
     __tablename__ = "user"
@@ -19,8 +19,6 @@ class User(TimestampModel, TenantMixin, table=True):
     email: str = Field(nullable=False, unique=True, index=True, max_length=255)
     hashed_password: str = Field(nullable=False)
     full_name: str = Field(nullable=False, max_length=255)
-    role: UserRole = Field(default=UserRole.LEARNER, nullable=False)
+    role:str = Field(default=UserRole.LEARNER.value, nullable=False,max_length=100)
     is_active: bool = Field(default=True)
 
-    # Relationships
-    organization: "Organization" = Relationship(back_populates="users")

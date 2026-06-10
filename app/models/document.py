@@ -1,10 +1,10 @@
-import uuid
+# app/models/document.py
 from typing import Optional
-from sqlmodel import Field, Relationship, SQLModel
-from app.db.base import TimestampModel, TenantMixin
+from sqlmodel import Field, Relationship
+from app.db.base import TimestampModel
 
 
-class Document(TimestampModel, TenantMixin, table=True):
+class Document(TimestampModel, table=True):
     """Uploaded PDFs/documents used as context for the AI."""
 
     __tablename__ = "document"

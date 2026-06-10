@@ -1,10 +1,10 @@
-import uuid
+# app/models/project.py
 from typing import Dict, Any, List, Optional
-from sqlmodel import Field, Relationship, SQLModel, Column, JSON
-from app.db.base import TimestampModel, TenantMixin
+from sqlmodel import Field, Relationship, Column, JSON
+from app.db.base import TimestampModel
 
 
-class Project(TimestampModel, TenantMixin, table=True):
+class Project(TimestampModel, table=True):
     """Learning and Development design projects."""
 
     __tablename__ = "project"
@@ -22,6 +22,5 @@ class Project(TimestampModel, TenantMixin, table=True):
     settings: Dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
 
     # Relationships
-    organization: "Organization" = Relationship(back_populates="projects")
     workflows: List["WorkflowRun"] = Relationship(back_populates="project")
     documents: List["Document"] = Relationship(back_populates="project")

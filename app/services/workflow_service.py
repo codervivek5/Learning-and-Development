@@ -1,3 +1,5 @@
+# app/services/workflow_service.py
+
 import asyncio
 from typing import Any, Dict, List, Optional
 from sqlalchemy import select
@@ -16,11 +18,10 @@ class WorkflowService:
 
     @staticmethod
     async def create_workflow_run(
-        db: AsyncSession, project_id: int, organization_id: int
+        db: AsyncSession, project_id: int
     ) -> WorkflowRun:
         db_workflow = WorkflowRun(
             project_id=project_id,
-            organization_id=organization_id,
             current_phase=WorkflowPhase.ANALYSIS,
             status=WorkflowStatus.PENDING,
             state_data={},
@@ -32,12 +33,11 @@ class WorkflowService:
 
     @staticmethod
     async def get_workflow_run(
-        db: AsyncSession, workflow_id: int, organization_id: int
+        db: AsyncSession, workflow_id: int
     ) -> Optional[WorkflowRun]:
         result = await db.execute(
             select(WorkflowRun).where(
                 WorkflowRun.id == workflow_id,
-                WorkflowRun.organization_id == organization_id,
             )
         )
         return result.scalars().first()
@@ -46,13 +46,12 @@ class WorkflowService:
     async def update_workflow_run(
         db: AsyncSession,
         workflow_id: int,
-        organization_id: int,
         current_phase: Optional[WorkflowPhase] = None,
         status: Optional[WorkflowStatus] = None,
         state_data: Optional[Dict[str, Any]] = None,
         logs: Optional[str] = None,
     ) -> Optional[WorkflowRun]:
-        db_workflow = await WorkflowService.get_workflow_run(db, workflow_id, organization_id)
+        db_workflow = await WorkflowService.get_workflow_run(db, workflow_id)
         if not db_workflow:
             return None
 
@@ -75,10 +74,10 @@ class WorkflowService:
 
     @staticmethod
     async def start_workflow_execution(
-        db: AsyncSession, workflow_id: int, organization_id: int
+        db: AsyncSession, workflow_id: int
     ) -> Optional[WorkflowRun]:
         """Trigger background execution of the workflow run."""
-        db_workflow = await WorkflowService.get_workflow_run(db, workflow_id, organization_id)
+        db_workflow = await WorkflowService.get_workflow_run(db, workflow_id)
         if not db_workflow:
             return None
 
@@ -93,7 +92,6 @@ class WorkflowService:
             from app.tasks.ai_generation_task import _async_run_workflow
             asyncio.create_task(_async_run_workflow(
                 workflow_id_str=str(workflow_id),
-                organization_id_str=str(organization_id),
             ))
             logger.info("Successfully started Workflow execution task in background", workflow_id=workflow_id)
         except Exception as e:

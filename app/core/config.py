@@ -57,10 +57,18 @@ class Settings(BaseSettings):
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
     # AI Provider
-    LLM_PROVIDER: str = "gemini"  # gemini, mock, openai, claude
+    LLM_PROVIDER: str = "gemini"  # gemini, ollama, openai, claude
     GEMINI_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
     CLAUDE_API_KEY: Optional[str] = None
+
+    # Ollama provider settings
+    OLLAMA_BINARY_PATH: Optional[str] = None
+    OLLAMA_MODEL: Optional[str] = "llama3.2"
+    OLLAMA_TEMPERATURE: float = 0.7
+
+    # Embedding provider settings
+    EMBEDDING_PROVIDER: str = "gemini"  # gemini, openai, claude, ollama
 
     # AI Model Settings
     DEFAULT_MODEL: str = "gemini-2.5-flash"
