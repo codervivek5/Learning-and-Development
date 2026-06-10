@@ -387,7 +387,8 @@ async def delete_user(
     current_user: User = Depends(
         RoleChecker(
             [
-                UserRole.SUPER_ADMIN
+                UserRole.SUPER_ADMIN,
+                # UserRole.ADMIN
             ]
         )
     )
