@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, get_current_organization_id
+from app.api.deps import get_current_user, RoleChecker  # Fixed imports
 from app.db.session import get_db
 from app.models.user import User
+from app.core.constants import UserRole
 from app.schemas.analysis import AnalysisRequest, AnalysisOutput, AnalysisResponse
 from app.services.ai_service import AIService
 from app.services.project_service import ProjectService
@@ -18,17 +19,14 @@ async def run_analysis(
     project_id: int,
     request: AnalysisRequest,
     db: AsyncSession = Depends(get_db),
-    organization_id: int = Depends(get_current_organization_id),
-    current_user: User = Depends(get_current_user),
+    # RBAC Guard: Only ADMIN can trigger the analysis run
+    current_user: User = Depends(RoleChecker([UserRole.ADMIN])),
 ):
-    project = await ProjectService.get_project(db, project_id, organization_id)
+    project = await ProjectService.get_project(db, project_id)
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=(
-                f"Project {project_id} not found or unauthorized for organization "
-                f"{organization_id}."
-            ),
+            detail=f"Project {project_id} not found.",
         )
 
     analysis_response = await service.generate_needs_analysis(
@@ -38,12 +36,12 @@ async def run_analysis(
         user_id=current_user.id,
     )
 
+    # Removed organization_id parameter from service call
     await TrainingContentService.save_phase_output(
         db=db,
         project_id=project_id,
         phase="analysis",
         content=analysis_response.output.model_dump(),
-        organization_id=organization_id,
     )
 
     return analysis_response
@@ -53,13 +51,14 @@ async def run_analysis(
 async def get_analysis_output(
     project_id: int,
     db: AsyncSession = Depends(get_db),
-    organization_id: int = Depends(get_current_organization_id),
+    # RBAC Guard: Both LEARNER and ADMIN can view the analysis results
+    current_user: User = Depends(RoleChecker([UserRole.LEARNER, UserRole.ADMIN])),
 ):
+    # Removed organization_id parameter from service call
     record = await TrainingContentService.get_latest_phase_output(
         db=db,
         project_id=project_id,
         phase="analysis",
-        organization_id=organization_id,
     )
     if not record:
         raise HTTPException(

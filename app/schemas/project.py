@@ -1,5 +1,4 @@
 # app/schemas/project.py
-import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
 from pydantic import BaseModel
@@ -22,7 +21,6 @@ class ProjectResponse(BaseModel):
     title: str
     description: Optional[str]
     settings: Dict[str, Any]
-    organization_id: int
     created_at: datetime
     updated_at: datetime
 

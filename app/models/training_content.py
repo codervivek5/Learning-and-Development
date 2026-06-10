@@ -2,10 +2,10 @@ from typing import Optional, Dict, Any
 
 from sqlmodel import Field, SQLModel, Column, JSON
 
-from app.db.base import TimestampModel, TenantMixin
+from app.db.base import TimestampModel
 
 
-class TrainingContent(TimestampModel, TenantMixin, table=True):
+class TrainingContent(TimestampModel, table=True):
     __tablename__ = "training_content"
 
     id: Optional[int] = Field(default=None, primary_key=True)

@@ -1,11 +1,11 @@
-# app/api/uploads.py
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.api.deps import get_current_user, get_current_organization_id
+from app.api.deps import get_current_user, RoleChecker
 from app.models.user import User
+from app.core.constants import UserRole
 from app.services.upload_service import UploadService
 from app.models.document import Document
 
@@ -17,8 +17,8 @@ async def upload_document(
     project_id: int,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    organization_id: int = Depends(get_current_organization_id),
-    current_user: User = Depends(get_current_user),
+    # RBAC Guard: Only ADMIN can upload/modify documents
+    current_user: User = Depends(RoleChecker([UserRole.ADMIN])),
 ):
     """Upload a training material document (PDF/Word/PPT) for AI context."""
     # Check mime type support
@@ -38,7 +38,6 @@ async def upload_document(
         db=db,
         file=file,
         project_id=project_id,
-        organization_id=organization_id,
     )
     return {
         "message": "File uploaded successfully, parsing started in background.",
@@ -51,12 +50,12 @@ async def upload_document(
 async def list_project_documents(
     project_id: int,
     db: AsyncSession = Depends(get_db),
-    organization_id: int = Depends(get_current_organization_id),
-    current_user: User = Depends(get_current_user),
+    # Both LEARNER and ADMIN roles can view the documents assigned to a project
+    current_user: User = Depends(RoleChecker([UserRole.LEARNER, UserRole.ADMIN])),
 ):
     """Retrieve metadata of all uploaded documents for a project."""
     docs = await UploadService.get_project_documents(
-        db=db, project_id=project_id, organization_id=organization_id
+        db=db, project_id=project_id
     )
     return [
         {

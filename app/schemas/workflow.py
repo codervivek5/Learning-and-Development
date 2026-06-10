@@ -1,5 +1,4 @@
 # app/schemas/workflow.py
-import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
 from pydantic import BaseModel
@@ -24,7 +23,6 @@ class WorkflowResponse(BaseModel):
     status: WorkflowStatus
     state_data: Dict[str, Any]
     logs: Optional[str]
-    organization_id: int
     created_at: datetime
     updated_at: datetime
 

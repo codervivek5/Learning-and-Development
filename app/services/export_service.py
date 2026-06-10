@@ -20,18 +20,16 @@ class ExportService:
     async def export_pdf(
         db: AsyncSession,
         project_id: int,
-        organization_id: int,
     ) -> str:
         review_record = await TrainingContentService.get_latest_phase_output(
             db=db,
             project_id=project_id,
             phase="review",
-            organization_id=organization_id,
         )
         if not review_record:
             raise RuntimeError("Review phase output is required for export.")
 
-        project = await ProjectService.get_project(db, project_id, organization_id)
+        project = await ProjectService.get_project(db, project_id)
         if not project:
             raise RuntimeError("Project not found.")
 
@@ -66,18 +64,17 @@ class ExportService:
     async def export_docx(
         db: AsyncSession,
         project_id: int,
-        organization_id: int,
+
     ) -> str:
         review_record = await TrainingContentService.get_latest_phase_output(
             db=db,
             project_id=project_id,
             phase="review",
-            organization_id=organization_id,
         )
         if not review_record:
             raise RuntimeError("Review phase output is required for export.")
 
-        project = await ProjectService.get_project(db, project_id, organization_id)
+        project = await ProjectService.get_project(db, project_id)
         if not project:
             raise RuntimeError("Project not found.")
 
@@ -101,18 +98,16 @@ class ExportService:
     async def export_ppt(
         db: AsyncSession,
         project_id: int,
-        organization_id: int,
     ) -> str:
         review_record = await TrainingContentService.get_latest_phase_output(
             db=db,
             project_id=project_id,
             phase="review",
-            organization_id=organization_id,
         )
         if not review_record:
             raise RuntimeError("Review phase output is required for export.")
 
-        project = await ProjectService.get_project(db, project_id, organization_id)
+        project = await ProjectService.get_project(db, project_id)
         if not project:
             raise RuntimeError("Project not found.")
 

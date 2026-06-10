@@ -20,14 +20,12 @@ class UploadService:
         db: AsyncSession,
         file: UploadFile,
         project_id: int,
-        organization_id: int,
     ) -> Document:
         # Create storage uploads folder if not exists
         upload_dir = "./storage/uploads"
         os.makedirs(upload_dir, exist_ok=True)
 
         _, ext = os.path.splitext(file.filename or "")
-        # Use a simple counter-based name; the DB auto-increment id is assigned after commit.
         import uuid as _uuid
         stored_filename = f"{_uuid.uuid4().hex}{ext}"
         file_path = os.path.join(upload_dir, stored_filename)
@@ -44,7 +42,6 @@ class UploadService:
         # Save metadata to database
         db_document = Document(
             project_id=project_id,
-            organization_id=organization_id,
             filename=file.filename or "unknown",
             file_path=file_path,
             file_size=file_size,
@@ -74,12 +71,11 @@ class UploadService:
 
     @staticmethod
     async def get_project_documents(
-        db: AsyncSession, project_id: int, organization_id: int
+        db: AsyncSession, project_id: int
     ) -> Sequence[Document]:
         result = await db.execute(
             select(Document).where(
                 Document.project_id == project_id,
-                Document.organization_id == organization_id,
             )
         )
         return result.scalars().all()

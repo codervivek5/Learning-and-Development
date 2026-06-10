@@ -1,8 +1,5 @@
 from enum import Enum
 
-# Multi-tenant Header
-TENANT_HEADER = "X-Organization-ID"
-
 
 # User roles in the L&D Platform (RBAC)
 class UserRole(str, Enum):
@@ -10,6 +7,13 @@ class UserRole(str, Enum):
     ADMIN = "ADMIN"
     DEVELOPER = "DEVELOPER"
     DESIGNER = "DESIGNER"
+    LEARNER = "LEARNER"
+
+# Create User API roles
+class CreateUserRole(str, Enum):
+    LEARNER = "LEARNER"
+    DESIGNER = "DESIGNER"
+    DEVELOPER = "DEVELOPER"
 
 
 # Workflow execution phases

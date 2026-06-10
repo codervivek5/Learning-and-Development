@@ -14,13 +14,11 @@ class TrainingContentService:
         project_id: int,
         phase: str,
         content: dict,
-        organization_id: int,
     ) -> TrainingContent:
         training_content = TrainingContent(
             project_id=project_id,
             phase=phase,
             content=content,
-            organization_id=organization_id,
         )
         db.add(training_content)
         await db.commit()
@@ -32,14 +30,12 @@ class TrainingContentService:
         db: AsyncSession,
         project_id: int,
         phase: str,
-        organization_id: int,
     ) -> Optional[TrainingContent]:
         result = await db.execute(
             select(TrainingContent)
             .where(
                 TrainingContent.project_id == project_id,
                 TrainingContent.phase == phase,
-                TrainingContent.organization_id == organization_id,
             )
             .order_by(TrainingContent.id.desc())
             .limit(1)

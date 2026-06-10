@@ -1,7 +1,6 @@
 # app/api/auth.py
 from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -15,23 +14,34 @@ router = APIRouter()
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def signup(
-    email: str = Form(..., description="User email address"),
-    password: str = Form(..., description="Account password"),
-    full_name: str = Form(..., description="Full name of the user"),
-    role: UserRole = Form(UserRole.LEARNER, description="User role in the platform"),
-    organization_name: Optional[str] = Form(None, description="New organization name (creates org on signup)"),
-    db: AsyncSession = Depends(get_db),
+        email: str = Form(..., description="User email address"),
+        password: str = Form(..., description="Account password"),
+        full_name: str = Form(..., description="Full name of the user"),
+        role: UserRole = Form(UserRole.LEARNER, description="User role in the platform"),
+        db: AsyncSession = Depends(get_db),
 ):
-    """Register a new user and tenant organization."""
+    """
+    Register a new user directly into the single central system.
+    """
+    allowed_roles = [
+        UserRole.LEARNER,
+        UserRole.DESIGNER,
+        UserRole.DEVELOPER,
+    ]
+    if role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to register with the specified role."
+        )
+
     user_in = UserCreate(
         email=email,
         password=password,
         full_name=full_name,
         role=role,
-        organization_name=organization_name,
     )
     try:
-        user, _ = await AuthService.signup_user(db=db, user_in=user_in)
+        user = await AuthService.signup_user(db=db, user_in=user_in)
         return user
     except ValueError as e:
         raise HTTPException(
@@ -42,42 +52,41 @@ async def signup(
 
 @router.post("/login", response_model=Token)
 async def login_custom(
-    request: Request,
-    db: AsyncSession = Depends(get_db),
+        request: Request,
+        username: Optional[str] = Form(None, description="OAuth2 Compatibility (Email)"),
+        password: Optional[str] = Form(None, description="Account password"),
+        db: AsyncSession = Depends(get_db),
 ):
     """
-    Hybrid Endpoint: Dynamically parses JSON from React UI or
-    Form-Data/URL-Encoded formats from Swagger UI seamlessly.
+    Unified Hybrid Login Endpoint:
+    1. Shows interactive fields on Swagger UI (Fixes the empty box issue).
+    2. Seamlessly parses raw JSON from React UI.
+    3. Fully supports Swagger's top-right Authorize Lock button via 'username'.
     """
+    final_email = username
+    final_password = password
+
+    # Check if the incoming request is raw JSON from React UI
     content_type = request.headers.get("content-type", "")
-
-    try:
-        if "application/json" in content_type:
-            # Parses JSON structure from React cleanly
+    if "application/json" in content_type:
+        try:
             body = await request.json()
-            email = body.get("email")
-            password = body.get("password")
-        else:
-            # Parses urlencoded Form structure from Swagger Authorize / Curl fields
-            form_data = await request.form()
-            # Standard OAuth2 form structure uses 'username' field for email mapping
-            email = form_data.get("username") or form_data.get("email")
-            password = form_data.get("password")
+            final_email = body.get("email")
+            final_password = body.get("password")
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Could not parse JSON authentication payload correctly."
+            )
 
-    except Exception:
+    if not final_email or not final_password:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Could not parse authentication payload properties correctly."
-        )
-
-    if not email or not password:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Email and password fields are strictly required."
+            detail="Email/Username and password fields are strictly required."
         )
 
     user = await AuthService.authenticate_user(
-        db=db, email=email, password=password
+        db=db, email=final_email, password=final_password
     )
     if not user:
         raise HTTPException(
@@ -86,26 +95,8 @@ async def login_custom(
         )
 
     access_token = AuthService.generate_tokens(user.id)
-    return Token(access_token=access_token, token_type="bearer",organization_id=user.organization_id)
 
-
-@router.post("/login/access-token", response_model=Token)
-async def login_oauth(
-    form_data: OAuth2PasswordRequestForm = Depends(),  # For Swagger UI Authorize Box
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    OAuth2 compatible form data token login.
-    Keeps native Swagger UI 'Authorize' locks fully operational.
-    """
-    user = await AuthService.authenticate_user(
-        db=db, email=form_data.username, password=form_data.password
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
     )
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-        )
-
-    access_token = AuthService.generate_tokens(user.id)
-    return Token(access_token=access_token, token_type="bearer",organization_id=user.organization_id)

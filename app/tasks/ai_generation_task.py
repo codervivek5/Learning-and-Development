@@ -12,9 +12,8 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-async def _async_run_workflow(workflow_id_str: str, organization_id_str: str) -> None:
+async def _async_run_workflow(workflow_id_str: str) -> None:
     workflow_id = int(workflow_id_str)
-    organization_id = int(organization_id_str)
 
     ai_service = AIService()
 
@@ -59,7 +58,6 @@ async def _async_run_workflow(workflow_id_str: str, organization_id_str: str) ->
                 project_id=db_project.id,
                 phase="analysis",
                 content=analysis_output.model_dump(),
-                organization_id=organization_id,
             )
 
         design_output = await ai_service.generate_design(
@@ -79,7 +77,6 @@ async def _async_run_workflow(workflow_id_str: str, organization_id_str: str) ->
                 project_id=db_project.id,
                 phase="design",
                 content=design_output.model_dump(),
-                organization_id=organization_id,
             )
 
         develop_output = await ai_service.generate_development(
@@ -99,7 +96,6 @@ async def _async_run_workflow(workflow_id_str: str, organization_id_str: str) ->
                 project_id=db_project.id,
                 phase="develop",
                 content=develop_output.model_dump(),
-                organization_id=organization_id,
             )
 
         review_output = await ai_service.generate_review(
@@ -119,7 +115,6 @@ async def _async_run_workflow(workflow_id_str: str, organization_id_str: str) ->
                 project_id=db_project.id,
                 phase="review",
                 content=review_output.model_dump(),
-                organization_id=organization_id,
             )
 
         logger.info("Workflow run completed successfully", workflow_id=workflow_id)
@@ -136,6 +131,6 @@ async def _async_run_workflow(workflow_id_str: str, organization_id_str: str) ->
 
 
 @celery_app.task(name="app.tasks.ai_generation_task.run_workflow_pipeline_task")
-def run_workflow_pipeline_task(workflow_id: str, organization_id: str) -> None:
+def run_workflow_pipeline_task(workflow_id: str) -> None:
     """Celery background task to trigger the complete agentic L&D design process."""
-    asyncio.run(_async_run_workflow(workflow_id, organization_id))
+    asyncio.run(_async_run_workflow(workflow_id))

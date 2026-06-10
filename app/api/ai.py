@@ -1,11 +1,8 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, Form, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.api.deps import get_current_user, get_current_organization_id
+from app.api.deps import get_current_user, RoleChecker
 from app.db.session import get_db
 from app.models.user import User
+from app.core.constants import UserRole
 from app.schemas.ai import (
     AIInteractivityResponse,
     AIInteractivityRequest,
@@ -27,11 +24,15 @@ async def generate_ai_objectives(
     project_id: int = Form(...),
     content_source: str = Form(...),
     content: str = Form(...),
-    db: AsyncSession = Depends(get_db),
-    organization_id: int = Depends(get_current_organization_id),
-    current_user: User = Depends(get_current_user),
+    # RBAC Guard: Restricting heavy AI generations exclusively to platform ADMINS
+    current_user: User = Depends(RoleChecker([UserRole.ADMIN])),
 ):
+    """
+    Generate actionable e-learning behavioral objectives using LLM layers.
+    Accessible only by users with Admin role permissions.
+    """
     try:
+        # Note: 'db' session parameter was removed as it is not consumed by the service method
         return await service.generate_ai_objectives(
             project_id=project_id,
             content_source=content_source,
@@ -53,11 +54,15 @@ async def generate_ai_interactivity(
     project_id: int = Form(...),
     content_source: str = Form(...),
     content: str = Form(...),
-    db: AsyncSession = Depends(get_db),
-    organization_id: int = Depends(get_current_organization_id),
-    current_user: User = Depends(get_current_user),
+    # RBAC Guard: Restricting heavy AI generations exclusively to platform ADMINS
+    current_user: User = Depends(RoleChecker([UserRole.ADMIN])),
 ):
+    """
+    Generate contextual interactive element layouts and strategic blueprints via AI.
+    Accessible only by users with Admin role permissions.
+    """
     try:
+        # Note: 'db' session parameter was removed as it is not consumed by the service method
         return await service.generate_ai_interactivity(
             project_id=project_id,
             content_source=content_source,
